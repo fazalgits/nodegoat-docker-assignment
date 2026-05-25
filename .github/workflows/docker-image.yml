@@ -1,0 +1,57 @@
+name: Docker Image
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: nodegoat-secure
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 12
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npx --no-install jshint .
+
+      - name: Build Docker image
+        run: docker build -t $IMAGE_NAME:${{ github.sha }} -t $IMAGE_NAME:latest .
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag image for GHCR
+        if: github.event_name == 'push'
+        run: |
+          docker tag $IMAGE_NAME:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:${{ github.sha }}
+          docker tag $IMAGE_NAME:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:latest
+
+      - name: Push image to GHCR
+        if: github.event_name == 'push'
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:latest

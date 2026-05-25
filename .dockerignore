@@ -1,0 +1,16 @@
+.git
+.github
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+node_modules
+npm-debug.log
+coverage
+.nyc_output
+test/e2e/screenshots
+test/e2e/videos
+.DS_Store
+.env
+*.local
+README.md
