@@ -9,6 +9,7 @@ This project containerizes the public OWASP NodeGoat Node.js application for a p
 - Startup command: `node server.js` (`npm start` also runs this)
 - Default application port: `4000`
 - Database: MongoDB
+- Compatible database image: `mongo:4.4`
 - Database driver: `mongodb`
 - Main configuration file: `config/env/all.js`
 - Supported environment variables:
@@ -65,10 +66,12 @@ docker run -d \
   --name mongodb \
   --network nodegoat-network \
   -v mongodb-data:/data/db \
-  mongo:7
+  mongo:4.4
 ```
 
 MongoDB is not published with `-p` in the hardened version, so it is not exposed publicly.
+
+Compatibility note: the assignment example uses `mongo:7`, but this NodeGoat version uses an older MongoDB Node.js driver. MongoDB 7 removes the legacy `OP_QUERY` protocol used by that driver, which causes login errors. `mongo:4.4` keeps the application functional while preserving the Docker networking, volume, reverse proxy, and hardening requirements.
 
 ## Part 5: Custom Docker Network
 
@@ -103,6 +106,19 @@ Open the app directly:
 
 ```text
 http://localhost:4000
+```
+
+Seed the default users:
+
+```bash
+docker exec nodegoat-app node artifacts/db-reset.js
+```
+
+Default login:
+
+```text
+User Name: admin
+Password: Admin_123
 ```
 
 ## Part 7: Reverse Proxy Integration
@@ -189,7 +205,7 @@ docker run -d \
   --name mongodb \
   --network nodegoat-network \
   -v mongodb-data:/data/db \
-  mongo:7
+  mongo:4.4
 ```
 
 5. Refresh the application and verify the data still exists.
